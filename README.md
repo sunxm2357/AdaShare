@@ -1,4 +1,4 @@
-# AdaShare: Learning What To Share For Efficient Deep Multi-Task Learning (Neurips20)
+# AdaShare: Learning What To Share For Efficient Deep Multi-Task Learning (Neurips 2020)
 
 ## Introduction
 ![alt text](figures/model.jpg)
