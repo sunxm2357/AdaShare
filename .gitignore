@@ -1,0 +1,11 @@
+data/*
+checkpoints/*
+.DS_Store
+*.pyc
+*.xml
+*.iml
+.idea
+*.pickle
+*.json
+*.tar
+*.pickle

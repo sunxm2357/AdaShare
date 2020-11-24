@@ -1,0 +1,59 @@
+exp_name: taskonomy_5task
+seed: [88, 45, 50, 100, 44, 48, 2048, 2222]
+backbone: ResNet34
+tasks: ["seg", "sn", "depth", "keypoint", "edge"]
+tasks_num_class: [17, 3, 1, 1, 1]
+lambdas: [1, 3, 2, 7, 7]
+policy_model: task-specific
+
+paths:
+  log_dir: experiments/logs/
+  result_dir: experiments/results
+  checkpoint_dir: experiments/checkpoints
+
+dataload:
+  dataset: Taskonomy
+  dataroot: "../dataset/tiny-taskonomy-5-task"
+  crop_h: 224
+  crop_w: 224
+
+policy: True
+init_neg_logits:
+is_sparse: True
+is_sharing: True
+skip_layer: 0
+is_curriculum: True
+curriculum_speed: 1
+fix_BN: False
+diff_sparsity_weights: True
+retrain_from_pl: False
+
+
+train:
+  batch_size: 16
+  total_iters: 100000
+  warm_up_iters: 20000
+  retrain_total_iters: 30000
+  lr: 0.0001
+  policy_lr: 0.01
+  backbone_lr: 0.0001
+  reg_w: 0.001
+  reg_w_hamming: 0.005
+  print_freq: 100
+  val_freq: 1000
+  decay_temp_freq: 100
+  init_temp: 5
+  decay_temp: 0.965
+  decay_lr_freq: 12000
+  decay_lr_rate: 0.3
+  resume: True
+  retrain_resume: False
+  policy_iter: best
+  which_iter: warmup
+  init_method: equal
+  hard_sampling: False
+  weight_iter_alternate: 400
+  alpha_iter_alternate: 100
+
+test:
+  which_iter: best

@@ -1,0 +1,42 @@
+exp_name: NYU_v2_3Task_pretrain
+seed: [48]
+backbone: ResNet34
+tasks: ["seg", 'sn', "depth"]
+tasks_num_class: [40, 3, 1]
+lambdas: [1, 20, 3]
+policy_model: task-specific
+
+
+paths:
+  log_dir: ../experiments/logs
+  result_dir: ../experiments/results
+  checkpoint_dir: ../experiments/checkpoints
+
+
+dataload:
+  dataset: NYU_v2
+  dataroot: "/data/datasets/nyu_v2"
+  crop_h: 321
+  crop_w: 321
+
+policy: True
+init_neg_logits:
+is_sparse: True
+is_sharing: True
+skip_layer: 0
+is_curriculum: True
+curriculum_speed: 3
+fix_BN: False
+diff_sparsity_weights: True
+retrain_from_pl: False
+
+
+train:
+  policy_iter: best
+  which_iter: warmup
+  init_method: equal
+  hard_sampling: False
+
+
+test:
+  which_iter: best

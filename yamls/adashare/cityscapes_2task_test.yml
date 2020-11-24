@@ -1,0 +1,40 @@
+exp_name: cityscapes_2task_pretrain
+seed: [12]
+backbone: ResNet34
+tasks: ["seg", "depth"]
+lambdas: [1, 20]
+tasks_num_class: [19, 1]
+policy_model: task-specific
+
+paths:
+  log_dir: ../experiments/logs/
+  result_dir: ../experiments/results
+  checkpoint_dir: ../experiments/checkpoints
+
+dataload:
+  dataset: CityScapes
+  dataroot: "/data/datasets/cityscapes"
+  small_res: False
+  crop_h: 224
+  crop_w: 224
+
+policy: True
+init_neg_logits:
+is_sparse: True
+is_sharing: True
+skip_layer: 0
+is_curriculum: True
+curriculum_speed: 3
+fix_BN: False
+diff_sparsity_weights: True
+retrain_from_pl: False
+
+
+train:
+  policy_iter: latest
+  which_iter: warmup
+  init_method: equal
+  hard_sampling: False
+
+test:
+  which_iter: best
