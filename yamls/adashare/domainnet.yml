@@ -1,0 +1,65 @@
+exp_name: domainnet_adashare_taskbn
+seed: [88, 45, 50, 100, 44, 48, 2048, 2222, 23, 12, 94, 88, 1000, 42, 77, 666]
+backbone: ResNet34
+tasks_num_class: [345, 345, 345, 345, 345, 345]
+tasks: ['real', 'painting', 'quickdraw', 'clipart', 'infograph', 'sketch']
+lambdas: [1, 1, 1, 1, 1, 1]
+policy_model: blockwise
+task_bn: True
+
+
+retrain_from_pl: False
+policy: True
+init_neg_logits:
+is_sparse: True
+is_sharing: True
+skip_layer: 0
+is_curriculum: True
+is_deterministic: False
+curriculum_speed: 1
+fix_BN: False
+diff_sparsity_weights: True
+
+paths:
+  log_dir: /mnt/glusterfs/GVolStrp1/userhomes/rpanda18/sunxm/experiments/logs/
+  result_dir: /mnt/glusterfs/GVolStrp1/userhomes/rpanda18/sunxm/experiments/results
+  checkpoint_dir: /mnt/glusterfs/GVolStrp1/userhomes/rpanda18/sunxm/experiments/checkpoints
+
+dataload:
+  dataset: DomainNet
+  dataroot: "/mnt/glusterfs/GVolStrp1/userhomes/rpanda18/sunxm/datasets/DomainNet"
+  domains: ['real', 'painting', 'quickdraw', 'clipart', 'infograph', 'sketch']
+  crop_h: 224
+  crop_w: 224
+
+train:
+  batch_size: 32
+  total_iters: 20000
+  warm_up_iters: 4000
+  fc_lr: 0.001
+  backbone_lr: 0.00001
+  policy_lr: 0.01
+  print_freq: 100
+  val_freq: 400
+  resume: False
+  imagenet_pretrain: True
+  which_iter: warmup
+  weight_iter_alternate: 400
+  alpha_iter_alternate: 100
+  hard_sampling: False
+  reg_w: 0.01
+  reg_w_hamming: 0.1
+  decay_fc_lr_freq: 2000
+  decay_fc_lr_rate: 0.3
+  decay_temp_freq: 100
+  init_temp: 5
+  decay_temp: 0.965
+  retrain_resume: False
+  policy_iter: best
+  init_method: equal
+
+test:
+  which_epoch: 19
+  batch_size: 128
+  n_epochs: 20
+  hard_sampling: False
