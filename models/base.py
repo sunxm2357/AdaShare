@@ -1,7 +1,6 @@
-import torch
 import torch.nn as nn
 import numpy as np
-import pdb
+import torch
 affine_par = True
 
 
@@ -31,10 +30,12 @@ def conv3x3(in_channels, out_channels, stride=1, dilation=1):
 
 # No projection: identity shortcut
 # conv -> bn -> relu -> conv -> bn
+# No projection: identity shortcut
+# conv -> bn -> relu -> conv -> bn
 class BasicBlock(nn.Module):
     expansion = 1
 
-    def __init__(self, inplanes, planes, stride=1, dilation=1):
+    def __init__(self, inplanes, planes, stride=1, dilation=1, num_tasks=-1):
         super(BasicBlock, self).__init__()
         self.planes = planes
 
@@ -48,16 +49,31 @@ class BasicBlock(nn.Module):
         self.keep_masks = torch.from_numpy(np.concatenate(self.keep_masks)).float()
 
         self.conv1 = conv3x3(inplanes, planes, stride, dilation=dilation)
-        self.bn1 = nn.BatchNorm2d(planes, affine = affine_par)
+        if num_tasks == -1:
+            self.bn1 = nn.BatchNorm2d(planes,  affine=affine_par)
+        else:
+            for t_idx in range(num_tasks):
+                bn = nn.BatchNorm2d(planes, affine=affine_par)
+                setattr(self, 'task%d_bn1' % t_idx, bn)
+
         self.relu = nn.ReLU(inplace=True)
         self.conv2 = conv3x3(planes, planes, dilation=dilation)
-        self.bn2 = nn.BatchNorm2d(planes, affine = affine_par)
+        if num_tasks == -1:
+            self.bn2 = nn.BatchNorm2d(planes, affine=affine_par)
+        else:
+            for t_idx in range(num_tasks):
+                bn = nn.BatchNorm2d(planes, affine=affine_par)
+                setattr(self, 'task%d_bn2' % t_idx, bn)
 
-    def forward(self, x, keep=None):
+    def forward(self, x, keep=None, t_id=-1):
         # keep: [batch_size], int
         cuda_device = x.get_device()
         out = self.conv1(x)
-        out = self.bn1(out)
+        if t_id == -1:
+            out = self.bn1(out)
+        else:
+            bn = getattr(self, 'task%d_bn1' % t_id)
+            out = bn(out)
 
         # used for deep elastic
         if keep is not None:
@@ -71,28 +87,50 @@ class BasicBlock(nn.Module):
 
         out = self.relu(out)
         out = self.conv2(out)
-        y = self.bn2(out)
+        if t_id == -1:
+            y = self.bn2(out)
+        else:
+            bn = getattr(self, 'task%d_bn2' % t_id)
+            y = bn(out)
         return y
 
 
 class BasicBlock2(nn.Module):
     expansion = 1
 
-    def __init__(self, inplanes, planes, stride=1, dilation=1):
+    def __init__(self, inplanes, planes, stride=1, dilation=1, num_tasks=-1):
         super(BasicBlock2, self).__init__()
         self.conv1 = conv3x3(inplanes, planes, stride, dilation=dilation)
-        self.bn1 = nn.BatchNorm2d(planes, affine = affine_par)
+        if num_tasks == -1:
+            self.bn1 = nn.BatchNorm2d(planes, affine=affine_par)
+        else:
+            for t_idx in range(num_tasks):
+                bn = nn.BatchNorm2d(planes, affine=affine_par)
+                setattr(self, 'task%d_bn1' % t_idx, bn)
         self.relu = nn.ReLU(inplace=True)
         self.conv2 = conv3x3(planes, planes, dilation=dilation)
-        self.bn2 = nn.BatchNorm2d(planes, affine = affine_par)
+        if num_tasks == -1:
+            self.bn2 = nn.BatchNorm2d(planes, affine=affine_par)
+        else:
+            for t_idx in range(num_tasks):
+                bn = nn.BatchNorm2d(planes, affine=affine_par)
+                setattr(self, 'task%d_bn2' % t_idx, bn)
 
-    def forward(self, x):
+
+    def forward(self, x, t_id=-1):
         out = self.conv1(x)
-        out = self.bn1(out)
+        if t_id == -1:
+            out = self.bn1(out)
+        else:
+            bn = getattr(self, 'task%d_bn1' % t_id)
+            out = bn(out)
         out1 = self.relu(out)
         out = self.conv2(out1)
-        y = self.bn2(out)
-
+        if t_id == -1:
+            y = self.bn2(out)
+        else:
+            bn = getattr(self, 'task%d_bn2' % t_id)
+            y = bn(out)
         return y, out1
 
 
@@ -102,37 +140,59 @@ class Bottleneck(nn.Module):
 
     # |----------------------------------------------------------------|
     # 1x1 conv -> bn -> relu -> 3x3 conv -> bn -> relu -> 1x1 conv -> bn -> relu
-    def __init__(self, inplanes, planes, stride=1, dilation=1):
+    def __init__(self, inplanes, planes, stride=1, dilation=1, num_tasks=-1):
         super(Bottleneck, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, stride=stride, bias=False) # change
-        self.bn1 = nn.BatchNorm2d(planes, affine=affine_par)
-        for i in self.bn1.parameters():
-            i.requires_grad = False
+        if num_tasks == -1:
+            self.bn1 = nn.BatchNorm2d(planes, affine=affine_par)
+        else:
+            for t_idx in range(num_tasks):
+                bn = nn.BatchNorm2d(planes, affine=affine_par)
+                setattr(self, 'task%d_bn1' % t_idx, bn)
 
         padding = dilation
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1,
                                padding=padding, bias=False, dilation=dilation)
-        self.bn2 = nn.BatchNorm2d(planes, affine=affine_par)
-        for i in self.bn2.parameters():
-            i.requires_grad = False
+        if num_tasks == -1:
+            self.bn2 = nn.BatchNorm2d(planes,  affine=affine_par)
+        else:
+            for t_idx in range(num_tasks):
+                bn = nn.BatchNorm2d(planes, affine=affine_par)
+                setattr(self, 'task%d_bn2' % t_idx, bn)
         self.conv3 = nn.Conv2d(planes, planes * self.expansion, kernel_size=1, bias=False)
-        self.bn3 = nn.BatchNorm2d(planes * self.expansion, affine = affine_par)
-        for i in self.bn3.parameters():
-            i.requires_grad = False
+        if num_tasks == -1:
+            self.bn3 = nn.BatchNorm2d(planes * self.expansion,  affine=affine_par)
+        else:
+            for t_idx in range(num_tasks):
+                bn = nn.BatchNorm2d(planes * self.expansion, affine=affine_par)
+                setattr(self, 'task%d_bn3' % t_idx, bn)
+
         self.relu = nn.ReLU(inplace=True)
         self.stride = stride
 
-    def forward(self, x):
+    def forward(self, x, t_id=-1):
         out = self.conv1(x)
-        out = self.bn1(out)
+        if t_id == -1:
+            out = self.bn1(out)
+        else:
+            bn = getattr(self, 'task%d_bn1' % t_id)
+            out = bn(out)
         out = self.relu(out)
 
         out = self.conv2(out)
-        out = self.bn2(out)
-        out = self.relu(out)
+        if t_id == -1:
+            out = self.bn2(out)
+        else:
+            bn = getattr(self, 'task%d_bn2' % t_id)
+            out = bn(out)
 
+        out = self.relu(out)
         out = self.conv3(out)
-        out = self.bn3(out)
+        if t_id == -1:
+            out = self.bn3(out)
+        else:
+            bn = getattr(self, 'task%d_bn3' % t_id)
+            out = bn(out)
 
         return out
 
@@ -142,37 +202,59 @@ class Bottleneck2(nn.Module):
 
     # |----------------------------------------------------------------|
     # 1x1 conv -> bn -> relu -> 3x3 conv -> bn -> relu -> 1x1 conv -> bn -> relu
-    def __init__(self, inplanes, planes, stride=1, dilation=1):
+    def __init__(self, inplanes, planes, stride=1, dilation=1, num_tasks=-1):
         super(Bottleneck2, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, stride=stride, bias=False) # change
-        self.bn1 = nn.BatchNorm2d(planes, affine=affine_par)
-        for i in self.bn1.parameters():
-            i.requires_grad = False
+        if num_tasks == -1:
+            self.bn1 = nn.BatchNorm2d(planes, affine=affine_par)
+        else:
+            for t_idx in range(num_tasks):
+                bn = nn.BatchNorm2d(planes, affine=affine_par)
+                setattr(self, 'task%d_bn1' % t_idx, bn)
 
         padding = dilation
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1,
                                padding=padding, bias=False, dilation=dilation)
-        self.bn2 = nn.BatchNorm2d(planes, affine=affine_par)
-        for i in self.bn2.parameters():
-            i.requires_grad = False
+        if num_tasks == -1:
+            self.bn2 = nn.BatchNorm2d(planes, affine=affine_par)
+        else:
+            for t_idx in range(num_tasks):
+                bn = nn.BatchNorm2d(planes, affine=affine_par)
+                setattr(self, 'task%d_bn2' % t_idx, bn)
         self.conv3 = nn.Conv2d(planes, planes * self.expansion, kernel_size=1, bias=False)
-        self.bn3 = nn.BatchNorm2d(planes * self.expansion, affine = affine_par)
-        for i in self.bn3.parameters():
-            i.requires_grad = False
+        if num_tasks == -1:
+            self.bn3 = nn.BatchNorm2d(planes * self.expansion,  affine=affine_par)
+        else:
+            for t_idx in range(num_tasks):
+                bn = nn.BatchNorm2d(planes * self.expansion, affine=affine_par)
+                setattr(self, 'task%d_bn3' % t_idx, bn)
         self.relu = nn.ReLU(inplace=True)
         self.stride = stride
 
-    def forward(self, x):
+    def forward(self, x,  t_id=-1):
         out = self.conv1(x)
-        out = self.bn1(out)
+        if t_id == -1:
+            out = self.bn1(out)
+        else:
+            bn = getattr(self, 'task%d_bn1' % t_id)
+            out = bn(out)
         out1 = self.relu(out)
 
         out = self.conv2(out1)
-        out = self.bn2(out)
+        if t_id == -1:
+            out = self.bn2(out)
+        else:
+            bn = getattr(self, 'task%d_bn2' % t_id)
+            out = bn(out)
+
         out = self.relu(out)
 
         out = self.conv3(out)
-        out = self.bn3(out)
+        if t_id == -1:
+            out = self.bn3(out)
+        else:
+            bn = getattr(self, 'task%d_bn3' % t_id)
+            out = bn(out)
 
         return out, out1
 
@@ -232,12 +314,3 @@ class Classification_Module(nn.Module):
         x = self.dropout(x)
         x = self.conv3(x)
         return x
-
-
-if __name__ == '__main__':
-    block = BasicBlock(64, 256, stride=1, dilation=1)
-    block.cuda()
-    test_x = torch.ones([8, 64, 128, 128]).cuda()
-    keep = torch.randint(0, 3, (8, ))
-    output = block(test_x, keep)
-    pdb.set_trace()
