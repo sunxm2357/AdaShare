@@ -49,6 +49,8 @@ The formatted `CityScapes` can be found [here](https://drive.google.com/file/d/1
 
 Download `Tiny-Taskonomy` as instructed by its [GitHub](https://github.com/StanfordVL/taskonomy/tree/master/data).
 
+The formatted `DomainNet` can be found [here](https://drive.google.com/file/d/1qVtPnKX_iuNXcR3JoP4llxflIUEw880j/view?usp=sharing).
+
 Remember to change the `dataroot` to your local dataset path in all `yaml` files in the `./yamls/`.
 
 # Training
@@ -61,6 +63,8 @@ For example, `python train.py --config yamls/adashare/nyu_v2_2task.yml --gpus 0`
 
 Sample `yaml` files are under `yamls/adashare`
 
+**Note:** use `domainnet` branch for experiments on DomainNet, i.e. `python train_domainnet.py --config <yaml_file_name> --gpus <gpu ids>`
+
 ## Retrain Phase
 After Policy Learning Phase, we sample 8 different architectures and execute `re-train.py` for retraining.
 ```
@@ -69,6 +73,9 @@ python re-train.py --config <yaml_file_name> --gpus <gpu ids> --exp_ids <random 
 where we use different `--exp_ids` to specify different random seeds and generate different architectures. The best performance of all 8 runs is reported in the paper.
 
 For example, `python re-train.py --config yamls/adashare/nyu_v2_2task.yml --gpus 0 --exp_ids 0`. 
+
+**Note:** use `domainnet` branch for experiments on DomainNet, i.e. `python re-train_domainnet.py --config <yaml_file_name> --gpus <gpu ids>`
+
 
 # Test/Inference
 After Retraining Phase, execute `test.py` for get the quantitative results on the test set. 
