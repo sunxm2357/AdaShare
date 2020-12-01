@@ -21,9 +21,9 @@ fix_BN: False
 diff_sparsity_weights: True
 
 paths:
-  log_dir: /mnt/glusterfs/GVolStrp1/userhomes/rpanda18/sunxm/experiments/logs/
-  result_dir: /mnt/glusterfs/GVolStrp1/userhomes/rpanda18/sunxm/experiments/results
-  checkpoint_dir: /mnt/glusterfs/GVolStrp1/userhomes/rpanda18/sunxm/experiments/checkpoints
+  log_dir: ../experiments/logs/
+  result_dir: ../experiments/results
+  checkpoint_dir: ../experiments/checkpoints
 
 dataload:
   dataset: DomainNet
