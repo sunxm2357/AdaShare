@@ -27,7 +27,7 @@ paths:
 
 dataload:
   dataset: DomainNet
-  dataroot: "/mnt/glusterfs/GVolStrp1/userhomes/rpanda18/sunxm/datasets/DomainNet"
+  dataroot: "/data/datasets/DomainNet"
   domains: ['real', 'painting', 'quickdraw', 'clipart', 'infograph', 'sketch']
   crop_h: 224
   crop_w: 224
