@@ -2,10 +2,7 @@ import os
 import torch
 from torch import nn
 import torch.optim as optim
-import torch.nn.functional as F
 from models.adashare import MTL2
-from models.cw_resnet import AdaShare, Group, Group2
-from models.cw_resnet_instance import Instance_Group
 from envs.base_env import BaseEnv
 from scipy.special import softmax
 import pickle
