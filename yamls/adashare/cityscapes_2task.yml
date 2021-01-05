@@ -47,7 +47,7 @@ train:
   decay_temp_freq: 100
   init_temp: 5
   decay_temp: 0.965
-  resume: True
+  resume: False
   retrain_resume: False
   policy_iter: best
   which_iter: warmup
